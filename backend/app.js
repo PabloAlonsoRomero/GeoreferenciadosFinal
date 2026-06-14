@@ -2,6 +2,11 @@
  * app.js: Punto de entrada principal para el servidor de TurismoBennito.
  * Inicializa la conexión a MongoDB Atlas, configura middlewares y monta las rutas.
  */
+
+// Cargar variables de entorno desde backend/.env (solo en desarrollo local)
+// En producción (Render), las variables se configuran en el panel de Render
+require('dotenv').config();
+
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 

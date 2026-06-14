@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
-// Clave secreta estática para JWT (apropiada para desarrollo escolar)
-const JWT_SECRET = 'bennito-secret-token-key-lasalle-2026';
+// Clave secreta para JWT: se lee del .env en local, o del panel de Render en producción
+const JWT_SECRET = process.env.JWT_SECRET || 'bennito-secret-token-key-lasalle-2026';
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
