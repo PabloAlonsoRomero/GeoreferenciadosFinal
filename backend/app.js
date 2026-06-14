@@ -20,12 +20,13 @@ const { logErrors, errorHandler } = require('./middlewares/errorHandler');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración de CORS — permite peticiones desde localhost (dev) y Vercel (prod)
+// Configuración de CORS — permite peticiones desde localhost (dev), Vercel (prod) y el propio Render (Swagger UI)
 const allowedOrigins = [
-  'http://localhost:4200',
-  // ⚠️ Reemplaza esta URL con tu dominio de Vercel después de desplegar el frontend
-  'https://turismo-bennito.vercel.app',
-  process.env.FRONTEND_URL // permite configurarlo por variable de entorno en Render
+  'http://localhost:4200',   // Angular en desarrollo
+  'http://localhost:3000',   // Swagger UI en local
+  'https://turismo-bennito.vercel.app',      // Frontend en Vercel (actualiza con tu URL real)
+  process.env.FRONTEND_URL,                  // Variable de entorno para el frontend en Render
+  process.env.RENDER_EXTERNAL_URL            // El propio dominio de Render (para Swagger UI)
 ].filter(Boolean);
 
 app.use(cors({
