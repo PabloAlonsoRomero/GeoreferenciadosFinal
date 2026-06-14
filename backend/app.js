@@ -15,8 +15,26 @@ const { logErrors, errorHandler } = require('./middlewares/errorHandler');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración de CORS
-app.use(cors());
+// Configuración de CORS — permite peticiones desde localhost (dev) y Vercel (prod)
+const allowedOrigins = [
+  'http://localhost:4200',
+  // ⚠️ Reemplaza esta URL con tu dominio de Vercel después de desplegar el frontend
+  'https://turismo-bennito.vercel.app',
+  process.env.FRONTEND_URL // permite configurarlo por variable de entorno en Render
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origen (Postman, Swagger local, curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS no permitido para: ${origin}`));
+    }
+  },
+  credentials: true
+}));
+
 
 // Middleware para entender JSON en las peticiones
 app.use(express.json());
@@ -31,9 +49,9 @@ setupSwagger(app);
 app.use(logErrors);
 app.use(errorHandler);
 
-// Cadena de conexión de MongoDB Atlas (Proporcionada en la materia)
-// Conectamos a la base de datos "turismoBennito" para aislar los datos de este proyecto
-const mongoURI = "MONGODB_URI_REMOVED_FROM_HISTORY";
+// La URI de MongoDB se lee de la variable de entorno (configurada en Render)
+// En desarrollo local, crea un archivo backend/.env con MONGO_URI=tu_cadena_de_conexion
+const mongoURI = process.env.MONGO_URI || "MONGODB_URI_REMOVED_FROM_HISTORY";
 
 mongoose.connect(mongoURI)
   .then(() => {

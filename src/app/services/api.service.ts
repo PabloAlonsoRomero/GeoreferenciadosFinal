@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -8,8 +9,8 @@ import { Observable } from 'rxjs';
 export class ApiService {
   private readonly http = inject(HttpClient);
   
-  // Puedes cambiar esta URL por tu dirección IP o dominio de producción cuando despliegues
-  private readonly baseUrl = 'http://localhost:3000';
+  // En desarrollo apunta a localhost:3000, en producción a la URL de Render
+  private readonly baseUrl = environment.apiUrl;
 
   /**
    * Genera las cabeceras HTTP, incluyendo el Token JWT de autorización si está logeado.

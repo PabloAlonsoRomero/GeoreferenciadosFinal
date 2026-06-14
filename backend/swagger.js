@@ -20,6 +20,11 @@ const swaggerDefinition = {
     {
       url: 'http://localhost:3000',
       description: 'Servidor local de desarrollo'
+    },
+    {
+      // ⚠️ Reemplaza esta URL con la que te dé Render al desplegar
+      url: 'https://turismobennito-backend.onrender.com',
+      description: 'Servidor de producción (Render)'
     }
   ],
   tags: [

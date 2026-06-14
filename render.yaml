@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: turismobennito-backend
+    runtime: node
+    # Render usará la carpeta backend/ como raíz del servicio
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node app.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # ⚠️ Estas variables las configuras manualmente en el panel de Render:
+      # MONGO_URI  → tu cadena de conexión de MongoDB Atlas
+      # JWT_SECRET → una clave secreta larga y aleatoria
+      # FRONTEND_URL → la URL de tu app en Vercel (p.ej. https://turismo-bennito.vercel.app)
