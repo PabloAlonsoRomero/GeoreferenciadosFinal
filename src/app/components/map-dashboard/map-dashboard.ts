@@ -307,7 +307,7 @@ export class MapDashboard implements OnInit, OnDestroy {
                     Eliminar
                   </button>
                 </div>
-              ` : '<p style="margin: 0; font-size: 10px; color: #94a3b8; font-style: italic;">Inicia sesión como admin para editar/eliminar</p>'}
+              ` : ''}
             </div>
             
             <div class="popup-edit-mode" id="pop-edit-${p._id}" style="display: none; flex-direction: column; gap: 8px;">

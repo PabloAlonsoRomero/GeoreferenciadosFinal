@@ -207,10 +207,7 @@
       </div>
       
       <ng-template #formRestricted>
-        <div class="login-box-prompt">
-          <p *ngIf="!authService.isLoggedIn()">🔒 Inicia sesión como Administrador para agregar o editar marcadores y zonas turísticas.</p>
-          <p *ngIf="authService.isLoggedIn() && authService.currentUser()?.role !== 'admin'">🔒 Solo los Administradores pueden agregar o editar marcadores y zonas turísticas.</p>
-        </div>
+        <!-- Se oculta por completo cualquier mensaje o funcionalidad de administrador para mantener la interfaz limpia para usuarios normales -->
       </ng-template>
 
       <!-- LISTADO DE ELEMENTOS GUARDADOS (TABLA REAL TIME) -->
@@ -238,8 +235,8 @@
               </div>
               <div class="item-actions">
                 <button class="btn-action-center" (click)="centerOnItem(item)" title="Enfocar">🎯</button>
-                <button *ngIf="authService.isLoggedIn()" class="btn-action-edit" (click)="editItem(item)" title="Editar">✏️</button>
-                <button *ngIf="authService.isLoggedIn()" class="btn-action-delete" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
+                <button *ngIf="authService.isLoggedIn() && authService.currentUser()?.role === 'admin'" class="btn-action-edit" (click)="editItem(item)" title="Editar">✏️</button>
+                <button *ngIf="authService.isLoggedIn() && authService.currentUser()?.role === 'admin'" class="btn-action-delete" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
               </div>
             </div>
           </div>
@@ -259,8 +256,8 @@
               </div>
               <div class="item-actions">
                 <button class="btn-action-center" (click)="centerOnItem(item)" title="Enfocar">🎯</button>
-                <button *ngIf="authService.isLoggedIn()" class="btn-action-edit" (click)="editItem(item)" title="Editar">✏️</button>
-                <button *ngIf="authService.isLoggedIn()" class="btn-action-delete" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
+                <button *ngIf="authService.isLoggedIn() && authService.currentUser()?.role === 'admin'" class="btn-action-edit" (click)="editItem(item)" title="Editar">✏️</button>
+                <button *ngIf="authService.isLoggedIn() && authService.currentUser()?.role === 'admin'" class="btn-action-delete" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
               </div>
             </div>
           </div>
