@@ -1,0 +1,370 @@
+<div class="admin-container">
+  <!-- Top Navigation Bar -->
+  <header class="admin-header">
+    <div class="logo">
+      <span class="icon">📊</span>
+      <h1>Turismo<span>Bennito</span> Dashboard</h1>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/map" class="btn-back">🗺️ Volver al Mapa</a>
+      <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <!-- Dashboard Overview / Stats -->
+  <section class="stats-panel">
+    <div class="stat-card">
+      <div class="stat-icon bg-blue">📍</div>
+      <div class="stat-details">
+        <h3>Puntos Turísticos</h3>
+        <p class="stat-number">{{ totalPoints() }}</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon bg-purple">⬢</div>
+      <div class="stat-details">
+        <h3>Zonas Delimitadas</h3>
+        <p class="stat-number">{{ totalZones() }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon bg-green">👥</div>
+      <div class="stat-details">
+        <h3>Usuarios del Sistema</h3>
+        <p class="stat-number">{{ totalUsers() }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon bg-blue" style="background-color: #fffbeb; color: #d97706;">💬</div>
+      <div class="stat-details">
+        <h3>Reseñas Registradas</h3>
+        <p class="stat-number">{{ totalComments() }}</p>
+      </div>
+    </div>
+  </section>
+  <!-- Data Management Panel -->
+  <main class="management-panel">
+    <div class="panel-header">
+      <h2>{{ activeSubTab() === 'users' ? 'Gestión de Cuentas de Usuarios' : activeSubTab() === 'comments' ? 'Moderación de Comentarios' : 'Gestión de Elementos Geográficos' }}</h2>
+      <div class="sub-tabs">
+        <button [class.active]="activeSubTab() === 'points'" (click)="switchSubTab('points')">Puntos</button>
+        <button [class.active]="activeSubTab() === 'polygons'" (click)="switchSubTab('polygons')">Zonas</button>
+        <button [class.active]="activeSubTab() === 'users'" (click)="switchSubTab('users')">Usuarios</button>
+        <button [class.active]="activeSubTab() === 'comments'" (click)="switchSubTab('comments')">Comentarios</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="loader-box" *ngIf="loading()">
+        <span class="spinner"></span>
+        Cargando listados...
+      </div>
+
+      <!-- Tabla Puntos -->
+      <div *ngIf="activeSubTab() === 'points' && !loading()">
+        <div class="table-actions-bar" style="display: flex; justify-content: flex-start; margin-bottom: 15px;">
+          <button (click)="openPointModal()" class="btn-action-add">
+            📍 + Agregar Punto
+          </button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Latitud</th>
+              <th>Longitud</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="points().length === 0">
+              <td colspan="7" class="empty-row">No hay puntos registrados en MongoDB.</td>
+            </tr>
+            <tr *ngFor="let item of points()">
+              <td><b>{{ item.name }}</b></td>
+              <td><span class="badge badge-cat">{{ item.category }}</span></td>
+              <td>{{ item.lat.toFixed(6) }}</td>
+              <td>{{ item.lng.toFixed(6) }}</td>
+              <td>{{ item.description || 'Sin descripción' }}</td>
+              <td>
+                <span class="badge" [class.badge-active]="item.active !== false" [class.badge-inactive]="item.active === false">
+                  {{ item.active !== false ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-edit" (click)="openPointModal(item)">Editar</button>
+                <button class="btn-toggle-status" (click)="togglePointActive(item)">
+                  {{ item.active !== false ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button class="btn-delete" (click)="deletePoint(item._id)">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tabla Polígonos -->
+      <div *ngIf="activeSubTab() === 'polygons' && !loading()">
+        <div class="table-actions-bar" style="display: flex; justify-content: flex-start; margin-bottom: 15px;">
+          <button (click)="openPolygonModal()" class="btn-action-add">
+            ⬢ + Agregar Zona
+          </button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Vértices</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="polygons().length === 0">
+              <td colspan="5" class="empty-row">No hay zonas turísticas registradas en MongoDB.</td>
+            </tr>
+            <tr *ngFor="let item of polygons()">
+              <td><b>{{ item.name }}</b></td>
+              <td><span class="badge badge-poly">{{ item.category }}</span></td>
+              <td>{{ item.coordinates.length }} puntos</td>
+              <td>
+                <span class="badge" [class.badge-active]="item.active !== false" [class.badge-inactive]="item.active === false">
+                  {{ item.active !== false ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-edit" (click)="openPolygonModal(item)">Editar</button>
+                <button class="btn-toggle-status" (click)="togglePolygonActive(item)">
+                  {{ item.active !== false ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button class="btn-delete" (click)="deletePolygon(item._id)">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tabla Tabla Usuarios -->
+      <div *ngIf="activeSubTab() === 'users' && !loading()">
+        <div class="table-actions-bar" style="display: flex; justify-content: flex-start; margin-bottom: 15px;">
+          <button class="btn-action-add" (click)="openUserModal()">
+            👤 + Agregar Usuario
+          </button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Correo Electrónico</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="users().length === 0">
+              <td colspan="4" class="empty-row">No hay usuarios registrados en MongoDB.</td>
+            </tr>
+            <tr *ngFor="let item of users()">
+              <td><b>{{ item.email }}</b></td>
+              <td>
+                <span class="badge" [class.badge-admin]="item.role === 'admin'" [class.badge-user]="item.role === 'user'">
+                  {{ item.role }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-active]="item.active !== false" [class.badge-inactive]="item.active === false">
+                  {{ item.active !== false ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-edit" (click)="openUserModal(item)">Editar</button>
+                <button class="btn-toggle-status" (click)="toggleUserActive(item)">
+                  {{ item.active !== false ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button class="btn-delete" (click)="removeUser(item._id)">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tabla Comentarios -->
+      <div *ngIf="activeSubTab() === 'comments' && !loading()">
+        <table>
+          <thead>
+            <tr>
+              <th>Sitio Turístico</th>
+              <th>Usuario / Correo</th>
+              <th>Calificación</th>
+              <th>Reseña / Comentario</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="comments().length === 0">
+              <td colspan="6" class="empty-row">No hay comentarios ni reseñas registradas.</td>
+            </tr>
+            <tr *ngFor="let item of comments()">
+              <td><b>{{ item.pointId?.name || 'Punto eliminado' }}</b></td>
+              <td>{{ item.email }}</td>
+              <td>
+                <span class="star-rating" style="color: #fbbf24; font-weight: bold;">
+                  ★ {{ item.rating }}
+                </span>
+              </td>
+              <td style="max-width: 300px; word-break: break-word;">{{ item.comment }}</td>
+              <td>{{ item.date | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <button class="btn-delete" (click)="deleteComment(item._id)">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+
+
+  <!-- MODAL DE USUARIO (AGREGAR / EDITAR) -->
+  <div class="modal-overlay" *ngIf="showUserModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ editingUser() ? 'Editar Usuario' : 'Agregar Nuevo Usuario' }}</h3>
+        <button class="btn-close-modal" (click)="closeUserModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" placeholder="ejemplo@correo.com" [(ngModel)]="userEmail" />
+        </div>
+        <div class="modal-form-group">
+          <label>Contraseña</label>
+          <input type="password" placeholder="{{ editingUser() ? 'Dejar en blanco para mantener la actual' : '••••••••' }}" [(ngModel)]="userPassword" />
+        </div>
+        <div class="modal-form-group">
+          <label>Rol de Acceso</label>
+          <select [(ngModel)]="userRole">
+            <option value="user">Usuario (Estándar)</option>
+            <option value="admin">Administrador (Total)</option>
+          </select>
+        </div>
+        <div class="modal-form-group checkbox-group">
+          <input type="checkbox" id="userActiveChk" [(ngModel)]="userActive" />
+          <label for="userActiveChk">Usuario Activo</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeUserModal()">Cancelar</button>
+        <button class="btn-primary" (click)="saveUser()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE PUNTO (AGREGAR / EDITAR) -->
+  <div class="modal-overlay" *ngIf="showPointModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ editingPoint() ? 'Editar Punto Turístico' : 'Agregar Nuevo Punto Turístico' }}</h3>
+        <button class="btn-close-modal" (click)="closePointModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label>Nombre del Sitio</label>
+          <input type="text" placeholder="Ej. Templo Expiatorio" [(ngModel)]="pointName" />
+        </div>
+        <div class="modal-form-group">
+          <label>Categoría</label>
+          <select [(ngModel)]="pointCategory">
+            <option *ngFor="let cat of categoriesList" [value]="cat.id">{{ cat.label }}</option>
+          </select>
+        </div>
+        <div class="modal-form-group">
+          <label>Descripción</label>
+          <input type="text" placeholder="Ej. Monumental basílica gótica..." [(ngModel)]="pointDescription" />
+        </div>
+        
+        <div class="modal-form-group" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; box-sizing: border-box;">
+          <div style="color: #3b82f6; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12px; font-weight: 700;" (click)="redirectToMapForPoint()">
+            <span>🗺️ ¿Prefieres seleccionar la ubicación desde el mapa?</span>
+            <span style="font-size: 14px;">Ir al Mapa ➔</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <div class="modal-form-group" style="flex: 1;">
+            <label>Latitud</label>
+            <input type="number" step="0.000001" placeholder="21.123456" [(ngModel)]="pointLat" />
+          </div>
+          <div class="modal-form-group" style="flex: 1;">
+            <label>Longitud</label>
+            <input type="number" step="0.000001" placeholder="-101.654321" [(ngModel)]="pointLng" />
+          </div>
+        </div>
+        <div class="modal-form-group checkbox-group">
+          <input type="checkbox" id="pointActiveChk" [(ngModel)]="pointActive" />
+          <label for="pointActiveChk">Punto Activo</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closePointModal()">Cancelar</button>
+        <button class="btn-primary" (click)="savePoint()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE POLÍGONO / ZONA (AGREGAR / EDITAR) -->
+  <div class="modal-overlay" *ngIf="showPolygonModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ editingPolygon() ? 'Editar Zona Turística' : 'Agregar Nueva Zona Turística' }}</h3>
+        <button class="btn-close-modal" (click)="closePolygonModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label>Nombre de la Zona</label>
+          <input type="text" placeholder="Ej. Zona Centro León" [(ngModel)]="polygonName" />
+        </div>
+        <div class="modal-form-group">
+          <label>Categoría</label>
+          <select [(ngModel)]="polygonCategory">
+            <option *ngFor="let cat of categoriesList" [value]="cat.id">{{ cat.label }}</option>
+          </select>
+        </div>
+
+        <div class="modal-form-group" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; box-sizing: border-box;">
+          <div style="color: #3b82f6; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12px; font-weight: 700;" (click)="redirectToMapForPolygon()">
+            <span>🗺️ ¿Prefieres trazar o dibujar la zona sobre el mapa?</span>
+            <span style="font-size: 14px;">Ir al Mapa ➔</span>
+          </div>
+        </div>
+
+        <div class="modal-form-group">
+          <label>Coordenadas Geográficas (Vértices)</label>
+          <textarea 
+            placeholder="Formato: lat1,lng1; lat2,lng2; lat3,lng3 (Mínimo 3 puntos)" 
+            [(ngModel)]="polygonCoordsText"
+            style="width: 100%; height: 80px; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 12px; font-family: monospace; box-sizing: border-box; resize: none; outline: none;">
+          </textarea>
+        </div>
+        <div class="modal-form-group checkbox-group">
+          <input type="checkbox" id="polygonActiveChk" [(ngModel)]="polygonActive" />
+          <label for="polygonActiveChk">Zona Activa</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closePolygonModal()">Cancelar</button>
+        <button class="btn-primary" (click)="savePolygon()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>

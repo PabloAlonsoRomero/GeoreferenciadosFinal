@@ -1,0 +1,52 @@
+<div class="auth-container">
+  <div class="glass-card">
+    <div class="auth-header">
+      <div class="logo">
+        <span class="icon">📍</span>
+        <h1>Turismo<span>Bennito</span></h1>
+      </div>
+      <p class="subtitle">
+        {{ isRegister() ? 'Crea una cuenta para comenzar a mapear' : 'Inicia sesión para gestionar el mapa turístico' }}
+      </p>
+    </div>
+
+    <form (submit)="onSubmit()" class="auth-form">
+      <div *ngIf="errorMessage()" class="alert alert-error">
+        <span class="alert-icon">⚠️</span>
+        <span class="alert-text">{{ errorMessage() }}</span>
+      </div>
+
+      <div *ngIf="successMessage()" class="alert alert-success">
+        <span class="alert-icon">✅</span>
+        <span class="alert-text">{{ successMessage() }}</span>
+      </div>
+
+
+
+      <div class="form-group">
+        <label for="email">Correo Electrónico</label>
+        <input id="email" type="email" [(ngModel)]="email" name="email" placeholder="correo@ejemplo.com" required autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="loading()">
+        <span *ngIf="!loading()">{{ isRegister() ? 'Registrarse y Entrar' : 'Iniciar Sesión' }}</span>
+        <span *ngIf="loading()" class="spinner"></span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>
+        {{ isRegister() ? '¿Ya tienes una cuenta?' : '¿No tienes una cuenta aún?' }}
+        <button (click)="toggleMode()" class="btn-toggle">
+          {{ isRegister() ? 'Inicia Sesión aquí' : 'Regístrate aquí' }}
+        </button>
+      </p>
+      <a routerLink="/map" class="btn-back-map">← Volver al Mapa</a>
+    </div>
+  </div>
+</div>

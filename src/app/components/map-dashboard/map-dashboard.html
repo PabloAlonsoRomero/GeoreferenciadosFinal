@@ -1,0 +1,269 @@
+<div class="dashboard-container" [class.dark-theme]="isDarkMode()">
+  
+  <!-- MAPA INTERACTIVO -->
+  <div class="map-wrapper">
+    <div id="map-element" class="map-container"></div>
+
+    <!-- Controles Flotantes del Mapa -->
+    <div class="map-controls">
+      <button class="control-btn" (click)="toggleDarkMode()" title="Cambiar Tema (Día/Noche)">
+        <span>{{ isDarkMode() ? '☀️' : '🌙' }}</span>
+      </button>
+      <button class="control-btn" [class.active]="isPencilMode()" (click)="togglePencilMode()" title="Modo Lápiz (Trazado Libre)" *ngIf="authService.isLoggedIn() && authService.currentUser()?.role === 'admin'">
+        <span>✏️</span>
+      </button>
+    </div>
+
+    <!-- Indicador de Dibujo Activo -->
+    <div class="drawing-indicator" *ngIf="isPencilMode()">
+      <span class="pulse"></span>
+      Modo Lápiz Activo: Haz click y arrastra sobre el mapa para trazar
+    </div>
+  </div>
+
+  <!-- PANEL LATERAL DE DETALLES Y COMENTARIOS (SIDE PANEL OVERLAY) -->
+  <div class="details-panel" [class.open]="showPointDetails() && selectedPoint()">
+    <div class="panel-header" *ngIf="selectedPoint()">
+      <button class="btn-close-panel" (click)="showPointDetails.set(false)">×</button>
+      <div class="point-badge" [style.background-color]="getCategoryColor(selectedPoint().category)">
+        {{ selectedPoint().category | uppercase }}
+      </div>
+      <h2>{{ selectedPoint().name }}</h2>
+    </div>
+
+    <div class="panel-body" *ngIf="selectedPoint()">
+      <div class="point-desc">
+        <p>{{ selectedPoint().description || 'Sin descripción disponible.' }}</p>
+        <div class="point-coords">
+          <span>Lat: <b>{{ selectedPoint().lat }}</b></span>
+          <span>Lng: <b>{{ selectedPoint().lng }}</b></span>
+        </div>
+      </div>
+
+      <!-- SECCIÓN DE COMENTARIOS (CRUD 3) -->
+      <div class="comments-section">
+        <h3>Reseñas de la comunidad</h3>
+        
+        <!-- Lista de Comentarios -->
+        <div class="comments-list">
+          <p class="no-comments" *ngIf="comments().length === 0">Aún no hay reseñas para este lugar. ¡Sé el primero!</p>
+          
+          <div class="comment-item" *ngFor="let comment of comments()">
+            <div class="comment-header">
+              <span class="author">👤 {{ comment.email }}</span>
+              <span class="stars">
+                <span class="star-active" *ngFor="let star of [].constructor(comment.rating)">★</span>
+                <span class="star-inactive" *ngFor="let star of [].constructor(5 - comment.rating)">★</span>
+              </span>
+              <!-- Eliminar reseña si el usuario logeado es el autor -->
+              <button 
+                *ngIf="authService.isLoggedIn() && authService.currentUser()?.id === comment.userId" 
+                class="btn-delete-comment" 
+                (click)="deleteComment(comment._id)" 
+                title="Eliminar mi reseña">
+                🗑️
+              </button>
+            </div>
+            <p class="comment-text">{{ comment.comment }}</p>
+            <span class="comment-date">{{ comment.date | date:'dd/MM/yyyy, h:mm a' }}</span>
+          </div>
+        </div>
+
+        <!-- Formulario para agregar comentarios (Solo si está logeado) -->
+        <div class="comment-form-wrapper" *ngIf="authService.isLoggedIn(); else loginToComment">
+          <h4>Agregar tu opinión</h4>
+          <div class="comment-form">
+            <div class="rating-select">
+              <label>Puntuación:</label>
+              <select [(ngModel)]="newCommentRating">
+                <option [value]="5">5 estrellas ★★★★★</option>
+                <option [value]="4">4 estrellas ★★★★☆</option>
+                <option [value]="3">3 estrellas ★★★☆☆</option>
+                <option [value]="2">2 estrellas ★★☆☆☆</option>
+                <option [value]="1">1 estrella ★☆☆☆☆</option>
+              </select>
+            </div>
+            <textarea [(ngModel)]="newCommentText" placeholder="Escribe tu comentario aquí..."></textarea>
+            <button class="btn-add-comment" (click)="addComment()">Enviar Comentario</button>
+          </div>
+        </div>
+        <ng-template #loginToComment>
+          <div class="login-prompt">
+            Debes <a routerLink="/login">iniciar sesión</a> para comentar o puntuar este lugar.
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU PRINCIPAL LATERAL -->
+  <aside class="sidebar-panel">
+    <div class="sidebar-header">
+      <div class="brand">
+        <span class="brand-icon">📍</span>
+        <h1>Turismo<span>Bennito</span></h1>
+      </div>
+
+      <!-- Estado de Sesión -->
+      <div class="session-box">
+        <div class="session-logged" *ngIf="authService.isLoggedIn(); else sessionGuest">
+          <span class="welcome">Hola, <b>{{ authService.currentUser()?.email }}</b></span>
+          <div class="session-actions">
+            <a routerLink="/admin" class="btn-admin-nav" *ngIf="authService.currentUser()?.role === 'admin'">Dashboard</a>
+            <button (click)="handleLogout()" class="btn-logout-nav">Cerrar Sesión</button>
+          </div>
+        </div>
+        <ng-template #sessionGuest>
+          <div class="session-guest">
+            <span>¿Quieres agregar tus lugares?</span>
+            <a routerLink="/login" class="btn-login-nav">Iniciar Sesión / Registro</a>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Navegación entre Pestañas -->
+    <div class="tab-navigation">
+      <button [class.active]="activeTab() === 'points'" (click)="onTabChange('points')">Puntos</button>
+      <button [class.active]="activeTab() === 'polygons'" (click)="onTabChange('polygons')">Zonas</button>
+    </div>
+
+    <div class="sidebar-content">
+      
+      <!-- BUSCADOR POR NOMBRE -->
+      <div class="search-box">
+        <input type="text" placeholder="Buscar ubicación por nombre..." [(ngModel)]="searchQuery" />
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <!-- FORMULARIO DE CREACIÓN/EDICIÓN (Solo Administradores) -->
+      <div class="form-container" *ngIf="authService.isLoggedIn() && authService.currentUser()?.role === 'admin'; else formRestricted">
+        <div class="form-title">
+          <h3>{{ editingItem() ? 'Editar' : 'Agregar' }} {{ activeTab() === 'points' ? 'Punto Turístico' : 'Zona Turística' }}</h3>
+        </div>
+
+        <div class="element-form">
+          <input type="text" placeholder="Nombre" [(ngModel)]="name" />
+          
+          <!-- Descripción (Solo para puntos) -->
+          <textarea *ngIf="activeTab() === 'points'" placeholder="Descripción del sitio..." [(ngModel)]="description"></textarea>
+
+          <!-- Categoría (Solo puntos y polígonos) -->
+          <div class="select-group">
+            <label>Categoría:</label>
+            <select [(ngModel)]="elementCategory">
+              <option *ngFor="let cat of categoriesList" [value]="cat.id">{{ cat.label }}</option>
+            </select>
+          </div>
+
+          <!-- Campos Coordenadas Punto -->
+          <div class="form-coords-box" *ngIf="activeTab() === 'points'">
+            <p class="coords-note">Haz clic en el mapa para capturar las coordenadas automáticamente.</p>
+            <div class="coords-fields">
+              <div class="field">
+                <label>Latitud</label>
+                <input type="number" step="0.000001" [(ngModel)]="lat" />
+              </div>
+              <div class="field">
+                <label>Longitud</label>
+                <input type="number" step="0.000001" [(ngModel)]="lng" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos Coordenadas Polígonos -->
+          <div class="form-geom-box" *ngIf="activeTab() !== 'points'">
+            <p class="coords-note">
+              Usa el <b>Modo Lápiz ✏️</b> para trazar en el mapa, o añade coordenadas de forma manual:
+            </p>
+            <div class="coords-fields-geom">
+              <input type="number" placeholder="Latitud" step="0.000001" [(ngModel)]="newLat" />
+              <input type="number" placeholder="Longitud" step="0.000001" [(ngModel)]="newLng" />
+              <button class="btn-add-coord" (click)="addCoordinate()">+</button>
+            </div>
+
+            <!-- Listado de coordenadas cargadas -->
+            <div class="coords-scroll-list">
+              <span class="empty-coords-text" *ngIf="pathCoordinates.length === 0">Sin puntos registrados aún.</span>
+              <div class="coord-item-tag" *ngFor="let coord of pathCoordinates; let i = index">
+                <span>{{ coord.lat.toFixed(4) }}, {{ coord.lng.toFixed(4) }}</span>
+                <button (click)="removeCoordinate(i)" class="btn-remove-tag">×</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botonera de formulario -->
+          <div class="form-buttons">
+            <button class="btn-save" (click)="saveElement()">
+              {{ editingItem() ? 'Actualizar' : 'Guardar' }}
+            </button>
+            <button class="btn-cancel" *ngIf="editingItem()" (click)="resetForm()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #formRestricted>
+        <div class="login-box-prompt">
+          <p *ngIf="!authService.isLoggedIn()">🔒 Inicia sesión como Administrador para agregar o editar marcadores y zonas turísticas.</p>
+          <p *ngIf="authService.isLoggedIn() && authService.currentUser()?.role !== 'admin'">🔒 Solo los Administradores pueden agregar o editar marcadores y zonas turísticas.</p>
+        </div>
+      </ng-template>
+
+      <!-- LISTADO DE ELEMENTOS GUARDADOS (TABLA REAL TIME) -->
+      <div class="list-container">
+        <h3>Elementos Guardados (En Tiempo Real)</h3>
+        
+        <div class="items-list-scroll">
+          
+          <!-- Cargador -->
+          <div class="loader-box" *ngIf="loading()">
+            <span class="loading-spinner"></span>
+            Cargando datos de base de datos...
+          </div>
+
+          <!-- Listado Puntos -->
+          <div *ngIf="activeTab() === 'points' && !loading()">
+            <p class="empty-list" *ngIf="filteredPoints().length === 0">No hay ubicaciones registradas.</p>
+            <div class="list-item" *ngFor="let item of filteredPoints()" [class.selected]="selectedPoint()?._id === item._id">
+              <div class="item-info" (click)="selectPoint(item)">
+                <span class="cat-dot" [style.background-color]="getCategoryColor(item.category)"></span>
+                <div>
+                  <h4>{{ item.name }}</h4>
+                  <p>{{ item.description || 'Sin descripción' | slice:0:35 }}...</p>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-action-center" (click)="centerOnItem(item)" title="Enfocar">🎯</button>
+                <button *ngIf="authService.isLoggedIn()" class="btn-action-edit" (click)="editItem(item)" title="Editar">✏️</button>
+                <button *ngIf="authService.isLoggedIn()" class="btn-action-delete" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+          </div>
+
+
+
+          <!-- Listado Polígonos -->
+          <div *ngIf="activeTab() === 'polygons' && !loading()">
+            <p class="empty-list" *ngIf="filteredPolygons().length === 0">No hay zonas turísticas registradas.</p>
+            <div class="list-item" *ngFor="let item of filteredPolygons()">
+              <div class="item-info" (click)="centerOnItem(item)">
+                <span class="cat-dot" [style.background-color]="getCategoryColor(item.category)"></span>
+                <div>
+                  <h4>{{ item.name }}</h4>
+                  <p>Zona: {{ item.coordinates.length }} vértices</p>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-action-center" (click)="centerOnItem(item)" title="Enfocar">🎯</button>
+                <button *ngIf="authService.isLoggedIn()" class="btn-action-edit" (click)="editItem(item)" title="Editar">✏️</button>
+                <button *ngIf="authService.isLoggedIn()" class="btn-action-delete" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>

@@ -8,6 +8,7 @@
 
 # Node
 /node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
 
@@ -42,3 +43,9 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Variables de entorno (NUNCA subir a GitHub)
+.env
+.env.local
+.env.production
+backend/.env
