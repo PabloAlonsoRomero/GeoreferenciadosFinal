@@ -184,6 +184,10 @@
 
             <!-- Listado de coordenadas cargadas -->
             <div class="coords-scroll-list">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;" *ngIf="pathCoordinates.length > 0">
+                <span style="font-size: 11px; font-weight: bold; color: #64748b;">{{pathCoordinates.length}} vértices</span>
+                <button (click)="clearAllCoordinates()" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 10px; cursor: pointer;">Eliminar todos</button>
+              </div>
               <span class="empty-coords-text" *ngIf="pathCoordinates.length === 0">Sin puntos registrados aún.</span>
               <div class="coord-item-tag" *ngFor="let coord of pathCoordinates; let i = index">
                 <span>{{ coord.lat.toFixed(4) }}, {{ coord.lng.toFixed(4) }}</span>

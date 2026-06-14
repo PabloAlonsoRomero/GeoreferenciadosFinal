@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, PLATFORM_ID, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -20,6 +20,7 @@ export class MapDashboard implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly zone = inject(NgZone);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // Instancias de Leaflet
   private map!: L.Map;
@@ -150,6 +151,7 @@ export class MapDashboard implements OnInit, OnDestroy {
             this.newLat = parseFloat(lat.toFixed(6));
             this.newLng = parseFloat(lng.toFixed(6));
           }
+          this.cdr.detectChanges();
         });
       }
     });
@@ -168,6 +170,7 @@ export class MapDashboard implements OnInit, OnDestroy {
             this.newLat = parseFloat(lat.toFixed(6));
             this.newLng = parseFloat(lng.toFixed(6));
           }
+          this.cdr.detectChanges();
         });
         console.log(`Coordenada capturada por click derecho en mapa: ${lat}, ${lng}`);
       }
@@ -202,10 +205,13 @@ export class MapDashboard implements OnInit, OnDestroy {
       this.map.dragging.enable();
 
       if (tempPoints.length > 2) {
-        this.pathCoordinates = tempPoints.map(p => ({
-          lat: parseFloat(p.lat.toFixed(6)),
-          lng: parseFloat(p.lng.toFixed(6))
-        }));
+        this.zone.run(() => {
+          this.pathCoordinates = tempPoints.map(p => ({
+            lat: parseFloat(p.lat.toFixed(6)),
+            lng: parseFloat(p.lng.toFixed(6))
+          }));
+          this.cdr.detectChanges();
+        });
       }
 
       // Limpiar trazo temporal
@@ -442,6 +448,10 @@ export class MapDashboard implements OnInit, OnDestroy {
 
   protected removeCoordinate(index: number): void {
     this.pathCoordinates.splice(index, 1);
+  }
+
+  protected clearAllCoordinates(): void {
+    this.pathCoordinates = [];
   }
 
   protected editItem(item: any): void {
