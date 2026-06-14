@@ -24,9 +24,9 @@ const port = process.env.PORT || 3000;
 const allowedOrigins = [
   'http://localhost:4200',   // Angular en desarrollo
   'http://localhost:3000',   // Swagger UI en local
-  'https://turismo-bennito.vercel.app',      // Frontend en Vercel (actualiza con tu URL real)
-  process.env.FRONTEND_URL,                  // Variable de entorno para el frontend en Render
-  process.env.RENDER_EXTERNAL_URL            // El propio dominio de Render (para Swagger UI)
+  'https://georeferenciados-final.vercel.app',   // Frontend en Vercel
+  process.env.FRONTEND_URL,                      // Variable de entorno adicional (opcional)
+  process.env.RENDER_EXTERNAL_URL                // El propio dominio de Render (para Swagger UI)
 ].filter(Boolean);
 
 app.use(cors({
